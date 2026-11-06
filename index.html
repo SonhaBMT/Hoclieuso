@@ -38,14 +38,23 @@
                 </p>
             </div>
 
-            <!-- Ô tìm kiếm -->
-            <div class="w-full md:w-80">
+            <!-- Ô tìm kiếm & Bộ lọc -->
+            <div class="w-full md:w-80 flex flex-col gap-3">
                 <div class="relative">
                     <span class="absolute inset-y-0 left-0 flex items-center pl-3.5 pointer-events-none text-slate-400">
                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
                     </span>
                     <input type="text" id="searchInput" placeholder="Tìm kiếm bài học..." 
                         class="w-full pl-10 pr-4 py-3 bg-slate-800/80 border border-slate-700 rounded-xl text-slate-100 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm shadow-inner">
+                </div>
+                <!-- Menu chọn Khối & Môn học -->
+                <div class="grid grid-cols-2 gap-2">
+                    <select id="filterMon" class="w-full px-3 py-2.5 bg-slate-800/80 border border-slate-700 rounded-xl text-slate-100 text-xs focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                        <option value="">Tất cả Môn</option>
+                    </select>
+                    <select id="filterKhoi" class="w-full px-3 py-2.5 bg-slate-800/80 border border-slate-700 rounded-xl text-slate-100 text-xs focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                        <option value="">Tất cả Khối</option>
+                    </select>
                 </div>
             </div>
         </div>
@@ -61,7 +70,7 @@
         <div id="courseGrid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6"></div>
         
         <div id="noResult" class="hidden text-center py-16">
-            <p class="text-slate-400 text-base">Không tìm thấy bài giảng phù hợp với từ khóa của bạn.</p>
+            <p class="text-slate-400 text-base">Không tìm thấy bài giảng phù hợp với lựa chọn của bạn.</p>
         </div>
     </main>
 
@@ -72,14 +81,12 @@
             <div class="flex justify-between items-center px-6 py-4 bg-slate-800/80 border-b border-slate-700">
                 <h3 id="modalTitle" class="font-bold text-white text-base sm:text-lg truncate pr-4">Tên bài giảng</h3>
                 <div class="flex items-center gap-3">
-                    <a id="modalExternalLink" href="#" target="_blank" class="text-xs px-3 py-1.5 bg-indigo-600 hover:bg-indigo-500 text-white font-medium rounded-lg transition-colors flex items-center gap-1.5">
-                    </a>
                     <button onclick="closeModal()" class="text-slate-400 hover:text-white p-1 rounded-lg hover:bg-slate-700 transition-colors">
                         <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
                     </button>
                 </div>
             </div>
-            <!-- Modal Body (Iframe nhúng file Drive) -->
+            <!-- Modal Body -->
             <div class="flex-grow bg-slate-950 relative">
                 <iframe id="modalIframe" src="" class="w-full h-full border-0" allowfullscreen></iframe>
             </div>
@@ -91,10 +98,9 @@
         <p>&copy; TRANG WEB DO GIÁO VIÊN NGUYỄN SƠN HÀ PHÁT HÀNH.</p>
     </footer>
 
-    <!-- JavaScript Xử Lý Dữ Liệu & Xem Trực Tiếp -->
+    <!-- JavaScript Xử Lý Dữ Liệu -->
     <script>
-        // 👉 THAY ĐƯỜNG DẪN WEB APP APPS SCRIPT CỦA BẠN VÀO ĐÂY
-        const API_URL = 'https://script.google.com/macros/s/AKfycbywMmcZb8SMVbVW-oUcgER2PEPAa3FGCHIVjTmb6Hrvubh_G0dMtwo2RkV2-Go064-Vmg/exec';
+        const API_URL = 'https://script.google.com/macros/s/AKfycbw5hl_4do6oovCYg2m4b3pwD-x8KWcHXqdbBolbAB6tbIQTVoqJqNx28XPAHKGTN31uGA/exec';
 
         let allLessons = [];
 
@@ -103,7 +109,9 @@
                 const response = await fetch(API_URL);
                 allLessons = await response.json();
                 document.getElementById('loading').style.display = 'none';
-                displayLessons(allLessons);
+                
+                initFilters(allLessons);
+                processAndDisplay(allLessons); // Hiển thị toàn bộ ngay lập tức
             } catch (err) {
                 document.getElementById('loading').innerHTML = `
                     <div class="text-rose-400 bg-rose-500/10 border border-rose-500/20 px-4 py-3 rounded-xl text-sm">
@@ -113,8 +121,78 @@
                 console.error(err);
             }
         }
+		// Hàm tự động gán màu sắc đẹp mắt cho từng Môn học
+		function getSubjectBadgeStyle(subjectName) {
+			const name = (subjectName || "").toLowerCase().trim();
+			
+			if (name.includes("tin")) {
+				return "bg-indigo-500/10 text-indigo-400 border-indigo-500/20"; // Màu Tím Chàm
+			} else if (name.includes("toán")) {
+				return "bg-emerald-500/10 text-emerald-400 border-emerald-500/20"; // Màu Xanh Lá
+			} else if (name.includes("lý") || name.includes("vật lý")) {
+				return "bg-sky-500/10 text-sky-400 border-sky-500/20"; // Màu Xanh Dương
+			} else if (name.includes("hóa")) {
+				return "bg-amber-500/10 text-amber-400 border-amber-500/20"; // Màu Cam Amber
+			} else if (name.includes("sinh")) {
+				return "bg-teal-500/10 text-teal-400 border-teal-500/20"; // Màu Xanh Ngọc
+			} else if (name.includes("văn") || name.includes("ngữ văn")) {
+				return "bg-rose-500/10 text-rose-400 border-rose-500/20"; // Màu Đỏ Hồng
+			} else if (name.includes("anh") || name.includes("tiếng anh")) {
+				return "bg-purple-500/10 text-purple-400 border-purple-500/20"; // Màu Tím Đậm
+			} else if (name.includes("sử") || name.includes("địa")) {
+				return "bg-orange-500/10 text-orange-400 border-orange-500/20"; // Màu Cam Đậm
+			}
+			
+			// Môn khác mặc định
+			return "bg-slate-700/40 text-slate-300 border-slate-600/50";
+		}
+        function initFilters(data) {
+            const monSet = new Set();
+            const khoiSet = new Set();
 
-        function displayLessons(lessons) {
+            data.forEach(item => {
+                if (item["Môn Học"]) monSet.add(item["Môn Học"].trim());
+                if (item["Khối"]) khoiSet.add(item["Khối"].trim());
+            });
+
+            const monSelect = document.getElementById('filterMon');
+            monSet.forEach(mon => {
+                let opt = document.createElement('option');
+                opt.value = mon;
+                opt.textContent = mon;
+                monSelect.appendChild(opt);
+            });
+
+            const khoiSelect = document.getElementById('filterKhoi');
+            khoiSet.forEach(khoi => {
+                let opt = document.createElement('option');
+                opt.value = khoi;
+                opt.textContent = khoi;
+                khoiSelect.appendChild(opt);
+            });
+        }
+
+        function filterData() {
+            const keyword = document.getElementById('searchInput').value.toLowerCase().trim();
+            const selectedMon = document.getElementById('filterMon').value.trim();
+            const selectedKhoi = document.getElementById('filterKhoi').value.trim();
+
+            const filtered = allLessons.filter(item => {
+                const mon = (item["Môn Học"] || "").toString().trim();
+                const khoi = (item["Khối"] || "").toString().trim();
+                const title = (item["Tên Bài Giảng"] || "").toString().toLowerCase();
+
+                const matchKeyword = title.includes(keyword);
+                const matchMon = !selectedMon || mon === selectedMon;
+                const matchKhoi = !selectedKhoi || khoi === selectedKhoi;
+
+                return matchKeyword && matchMon && matchKhoi;
+            });
+
+            processAndDisplay(filtered);
+        }
+
+        function processAndDisplay(lessons) {
             const grid = document.getElementById('courseGrid');
             const noResult = document.getElementById('noResult');
             grid.innerHTML = '';
@@ -126,114 +204,153 @@
                 noResult.classList.add('hidden');
             }
 
+            let groupedMap = {};
             lessons.forEach(item => {
-                const title = item["Tên Bài Giảng / File"] || item["Tên File / Bài Giảng"] || "Bài học không tên";
-                const type = item["Loại File"] || "Tài liệu";
-                const url = item["Link Truy Cập"] || "#";
-                const date = item["Ngày Cập Nhật Cuối"] || "";
+                const title = item["Tên Bài Giảng"] || "";
+                if (!title.trim()) return;
 
-                if (!title || title.trim() === "") return;
-
-                let badgeStyle = "bg-slate-800 text-slate-300 border-slate-700";
-                let icon = "📄";
-                if (type.includes("PPTX") || type.includes("Slide")) {
-                    badgeStyle = "bg-amber-500/10 text-amber-400 border-amber-500/20";
-                    icon = "📊";
-                } else if (type.includes("Infographic") || type.includes("Ảnh")) {
-                    badgeStyle = "bg-emerald-500/10 text-emerald-400 border-emerald-500/20";
-                    icon = "🎨";
-                } else if (type.includes("PDF")) {
-                    badgeStyle = "bg-rose-500/10 text-rose-400 border-rose-500/20";
-                    icon = "📑";
+                if (!groupedMap[title]) {
+                    groupedMap[title] = {
+                        monHoc: item["Môn Học"] || "Chưa phân loại",
+                        khoi: item["Khối"] || "Chung",
+                        date: item["Ngày Cập Nhật Cuối"] || "",
+                        files: []
+                    };
                 }
+                groupedMap[title].files.push({
+                    type: item["Loại File"] || "Tài liệu",
+                    url: item["Link Truy Cập"] || "#"
+                });
+            });
 
+            // 🌟 SẮP XẾP CÁC BÀI HỌC THEO SỐ THỨ TỰ TỪ NHỎ ĐẾN LỚN (Bài 7, 8, 9, 10,...)
+            const sortedKeys = Object.keys(groupedMap).sort((a, b) => {
+                let numA = parseInt((a.match(/\d+/) || [0])[0]);
+                let numB = parseInt((b.match(/\d+/) || [0])[0]);
+                return numA - numB;
+            });
+
+            // Duyệt qua danh sách đã sắp xếp
+            sortedKeys.forEach((title, index) => {
+                const group = groupedMap[title];
+                
                 let formattedDate = "";
-                if (date) {
+                if (group.date) {
                     try {
-                        formattedDate = new Date(date).toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric' });
+                        formattedDate = new Date(group.date).toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric' });
                     } catch (e) {
-                        formattedDate = date;
+                        formattedDate = group.date;
                     }
                 }
 
+                let dropdownItemsHtml = '';
+                group.files.forEach(file => {
+                    let icon = "📄";
+                    let badgeColor = "text-slate-300";
+                    if (file.type.includes("PPTX") || file.type.includes("Slide")) {
+                        icon = "📊";
+                        badgeColor = "text-amber-400";
+                    } else if (file.type.includes("Infographic") || file.type.includes("Ảnh")) {
+                        icon = "🎨";
+                        badgeColor = "text-emerald-400";
+                    } else if (file.type.includes("PDF")) {
+                        icon = "📑";
+                        badgeColor = "text-rose-400";
+                    }
+
+                    dropdownItemsHtml += `
+                        <button onclick="openModal('${encodeURIComponent(title + ' (' + file.type + ')')}', '${file.url}')" 
+                            class="w-full flex items-center justify-between px-4 py-2.5 bg-slate-800/80 hover:bg-indigo-600/30 border border-slate-700/60 hover:border-indigo-500/50 rounded-xl text-left transition-all group/item">
+                            <span class="text-xs font-medium ${badgeColor} flex items-center gap-2">
+                                <span>${icon}</span> ${file.type}
+                            </span>
+                            <span class="text-xs text-indigo-400 group-hover/item:translate-x-1 transition-transform">Xem ngay &rarr;</span>
+                        </button>
+                    `;
+                });
+
+                // Lấy kiểu màu tương ứng với môn học
+                const badgeStyle = getSubjectBadgeStyle(group.monHoc);
+
+                const cardId = `dropdown_${index}`;
                 const card = document.createElement('div');
-                card.className = "group bg-slate-800/60 hover:bg-slate-800 border border-slate-700/70 hover:border-indigo-500/50 rounded-2xl p-5 flex flex-col justify-between transition-all duration-300 hover:shadow-xl hover:shadow-indigo-500/10 hover:-translate-y-1";
+                card.className = "group bg-slate-800/60 hover:bg-slate-800 border border-slate-700/70 hover:border-indigo-500/50 rounded-2xl p-5 flex flex-col justify-between transition-all duration-300 hover:shadow-xl hover:shadow-indigo-500/10";
                 card.innerHTML = `
                     <div>
-                        <div class="flex justify-between items-center mb-4">
-                            <span class="inline-flex items-center gap-1.5 text-xs font-medium px-3 py-1 rounded-full border ${badgeStyle}">
-                                <span>${icon}</span> ${type}
+                        <div class="flex justify-between items-center mb-3">
+                            <span class="text-xs font-semibold px-2.5 py-1 rounded-full border ${badgeStyle}">
+                                ${group.monHoc} • ${group.khoi}
                             </span>
                             <span class="text-xs text-slate-400 font-mono">${formattedDate}</span>
                         </div>
-                        <h3 class="font-bold text-slate-100 text-base sm:text-lg mb-3 line-clamp-2 group-hover:text-indigo-300 transition-colors">
+                        <h3 class="font-bold text-slate-100 text-base sm:text-lg mb-4 line-clamp-2 group-hover:text-indigo-300 transition-colors">
                             ${title}
                         </h3>
                     </div>
-                    <div class="pt-4 border-t border-slate-700/60 mt-2">
-                        <button onclick="openModal('${encodeURIComponent(title)}', '${url}')" 
-                           class="w-full inline-flex items-center justify-center gap-2 px-4 py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-semibold rounded-xl transition-all shadow-lg shadow-indigo-600/20 active:scale-[0.98]">
-                            <span>Nội Dung Bài Học</span>
-                            <svg class="w-4 h-4 transition-transform group-hover:scale-110" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
+                    <div>
+                        <button onclick="toggleDropdown('${cardId}')" 
+                           class="w-full inline-flex items-center justify-between px-4 py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-semibold rounded-xl transition-all shadow-lg shadow-indigo-600/20 active:scale-[0.98]">
+                            <span class="flex items-center gap-2">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/></svg>
+                                <span>Chọn loại tài liệu (${group.files.length})</span>
+                            </span>
+                            <svg id="arrow_${cardId}" class="w-4 h-4 transition-transform duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
                         </button>
+                        <div id="${cardId}" class="hidden flex-col gap-2 mt-3 pt-3 border-t border-slate-700/60 animate-in fade-in duration-200">
+                            ${dropdownItemsHtml}
+                        </div>
                     </div>
                 `;
                 grid.appendChild(card);
             });
         }
 
-        // Hàm chuyển đổi Link Drive sang dạng Nhúng tối ưu cho mọi thiết bị (PC & Mobile)
-        // Hàm chuyển đổi Link Drive sang dạng Nhúng tối ưu chống lỗi yêu cầu quyền
+        function toggleDropdown(cardId) {
+            const dropdown = document.getElementById(cardId);
+            const arrow = document.getElementById(`arrow_${cardId}`);
+            if (dropdown.classList.contains('hidden')) {
+                dropdown.classList.remove('hidden');
+                dropdown.classList.add('flex');
+                arrow.classList.add('rotate-180');
+            } else {
+                dropdown.classList.add('hidden');
+                dropdown.classList.remove('flex');
+                arrow.classList.remove('rotate-180');
+            }
+        }
+
         function getEmbedUrl(originalUrl) {
             if (!originalUrl) return "";
-            
-            // Xử lý nếu là link Google Drive hoặc Google Slides
             if (originalUrl.includes("drive.google.com") || originalUrl.includes("docs.google.com")) {
-                // Lấy ID của file từ URL
                 let fileIdMatch = originalUrl.match(/\/d\/([a-zA-Z0-9_-]+)/);
                 if (fileIdMatch && fileIdMatch[1]) {
-                    let fileId = fileIdMatch[1];
-                    // Sử dụng đuôi /preview chuẩn xác giúp vượt qua màn hình đăng nhập tài khoản
-                    return `https://drive.google.com/file/d/${fileId}/preview`;
+                    return `https://drive.google.com/file/d/${fileIdMatch[1]}/preview`;
                 }
             }
             return originalUrl;
         }
 
-        // Mở Modal xem trực tiếp
         function openModal(title, url) {
             const decodedTitle = decodeURIComponent(title);
             document.getElementById('modalTitle').innerText = decodedTitle;
-            document.getElementById('modalExternalLink').href = url;
-            
-            const embedUrl = getEmbedUrl(url);
-            document.getElementById('modalIframe').src = embedUrl;
-            
+            document.getElementById('modalIframe').src = getEmbedUrl(url);
             document.getElementById('viewerModal').classList.remove('hidden');
-            document.body.style.overflow = 'hidden'; // Khóa cuộn trang nền
+            document.body.style.overflow = 'hidden';
         }
 
-        // Đóng Modal
         function closeModal() {
             document.getElementById('viewerModal').classList.add('hidden');
-            document.getElementById('modalIframe').src = ""; // Xóa source iframe để ngắt tải file ngầm
-            document.body.style.overflow = 'auto'; // Mở lại cuộn trang
+            document.getElementById('modalIframe').src = "";
+            document.body.style.overflow = 'auto';
         }
 
-        // Đóng modal khi bấm phím ESC
         window.addEventListener('keydown', function(e) {
             if (e.key === 'Escape') closeModal();
         });
 
-        // Tìm kiếm tức thì
-        document.getElementById('searchInput').addEventListener('input', function(e) {
-            const keyword = e.target.value.toLowerCase().trim();
-            const filtered = allLessons.filter(item => {
-                const title = (item["Tên Bài Giảng / File"] || item["Tên File / Bài Giảng"] || "").toLowerCase();
-                return title.includes(keyword);
-            });
-            displayLessons(filtered);
-        });
+        document.getElementById('searchInput').addEventListener('input', filterData);
+        document.getElementById('filterMon').addEventListener('change', filterData);
+        document.getElementById('filterKhoi').addEventListener('change', filterData);
 
         loadLessons();
     </script>
