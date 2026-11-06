@@ -182,19 +182,22 @@
             });
         }
 
-        // Hàm chuyển đổi Link Drive sang dạng Nhúng (Embed) để xem trực tiếp
-        function getEmbedUrl(originalUrl) {
-            if (!originalUrl) return "";
-            // Nếu là link dạng /view hoặc /edit, đổi thành /preview để nhúng iframe sạch sẽ
-            if (originalUrl.includes("drive.google.com")) {
-                let embedUrl = originalUrl.replace(/\/view.*$/, "/preview").replace(/\/edit.*$/, "/preview");
-                if (!embedUrl.includes("/preview")) {
-                    embedUrl += (embedUrl.includes("?") ? "&" : "?") + "usp=sharing";
-                }
-                return embedUrl;
-            }
-            return originalUrl;
+        // Hàm chuyển đổi Link Drive sang dạng Nhúng tối ưu cho mọi thiết bị (PC & Mobile)
+function getEmbedUrl(originalUrl) {
+    if (!originalUrl) return "";
+    
+    // Nếu là link Google Drive
+    if (originalUrl.includes("drive.google.com")) {
+        // Chuyển đổi mọi dạng link /view, /edit thành /preview kèm theo tham số ẩn giao diện thừa
+        let fileIdMatch = originalUrl.match(/\/d\/([a-zA-Z0-9_-]+)/);
+        if (fileIdMatch && fileIdMatch[1]) {
+            let fileId = fileIdMatch[1];
+            // Sử dụng định dạng nhúng chuẩn xác của Google Viewer
+            return `https://drive.google.com/file/d/${fileId}/preview?usp=drivesdk`;
         }
+    }
+    return originalUrl;
+}
 
         // Mở Modal xem trực tiếp
         function openModal(title, url) {
