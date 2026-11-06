@@ -94,13 +94,12 @@
 
     <!-- Footer -->
     <footer class="bg-slate-950 border-t border-slate-800/80 py-6 text-center text-xs text-slate-500">
-        <p> NỘI DUNG BÀI GIẢNG VÀ VIDEO CHỈ MANG TÍNH CHẤT LÀ TÀI LIỆU THAM KHẢO.</p>
         <p>&copy; TRANG WEB DO GIÁO VIÊN NGUYỄN SƠN HÀ PHÁT HÀNH.</p>
     </footer>
 
     <!-- JavaScript Core Logic -->
     <script>
-        const API_URL = 'https://script.google.com/macros/s/AKfycbwTK-GOuOEnKqITcbBRQGErFw3qag0OaOk_tkRsvjwrKiKAu3x2LLeMlBEQ-uRdp3pzfQ/exec';
+        const API_URL = 'https://script.google.com/macros/s/AKfycbzmXHc6VFlF--rOWBvThZr23fC7GLt43y9IJV41Ymm0ix4v5Ue4kJqaUkVOFgQQfx2rCA/exec';
 
         let allLessons = [];
 
@@ -218,7 +217,8 @@
                 }
                 groupedMap[uniqueKey].files.push({
                     type: item["Loại File"] || "Tài liệu",
-                    url: item["Link Truy Cập"] || "#"
+                    url: item["Link Truy Cập"] || "#",
+                    originalName: item["Tên Bài Giảng / File"] || item["Tên Tệp Gốc"] || title
                 });
             });
 
@@ -248,6 +248,15 @@
                 group.files.forEach(file => {
                     let icon = "📄";
                     let badgeColor = "text-slate-300";
+                    
+                    let displayTypeName = file.type;
+                    if (file.originalName && file.originalName !== title) {
+                        let subPart = file.originalName.replace(title, "").replace(/^[\s\.\-_]+/, "").trim();
+                        if (subPart) {
+                            displayTypeName = `${file.type} - ${subPart}`;
+                        }
+                    }
+
                     if (file.type.includes("PPTX") || file.type.includes("Slide")) {
                         icon = "📊";
                         badgeColor = "text-amber-400";
@@ -257,13 +266,16 @@
                     } else if (file.type.includes("PDF")) {
                         icon = "📑";
                         badgeColor = "text-rose-400";
+                    } else if (file.type.includes("Video")) {
+                        icon = "🎬";
+                        badgeColor = "text-cyan-400";
                     }
 
                     dropdownItemsHtml += `
-                        <button onclick="openModal('${encodeURIComponent(title + ' (' + file.type + ')')}', '${file.url}')" 
+                        <button onclick="openModal('${encodeURIComponent(title + ' (' + displayTypeName + ')')}', '${file.url}')" 
                             class="w-full flex items-center justify-between px-4 py-2.5 bg-slate-800/80 hover:bg-indigo-600/30 border border-slate-700/60 hover:border-indigo-500/50 rounded-xl text-left transition-all group/item">
                             <span class="text-xs font-medium ${badgeColor} flex items-center gap-2">
-                                <span>${icon}</span> ${file.type}
+                                <span>${icon}</span> ${displayTypeName}
                             </span>
                             <span class="text-xs text-indigo-400 group-hover/item:translate-x-1 transition-transform">Xem ngay &rarr;</span>
                         </button>
