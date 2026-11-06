@@ -38,7 +38,7 @@
                 </p>
             </div>
 
-            <!-- Ô tìm kiếm & Bộ lọc -->
+            <!-- Ô tìm kiếm & Bộ lọc Môn / Khối -->
             <div class="w-full md:w-80 flex flex-col gap-3">
                 <div class="relative">
                     <span class="absolute inset-y-0 left-0 flex items-center pl-3.5 pointer-events-none text-slate-400">
@@ -47,7 +47,6 @@
                     <input type="text" id="searchInput" placeholder="Tìm kiếm bài học..." 
                         class="w-full pl-10 pr-4 py-3 bg-slate-800/80 border border-slate-700 rounded-xl text-slate-100 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm shadow-inner">
                 </div>
-                <!-- Menu chọn Khối & Môn học -->
                 <div class="grid grid-cols-2 gap-2">
                     <select id="filterMon" class="w-full px-3 py-2.5 bg-slate-800/80 border border-slate-700 rounded-xl text-slate-100 text-xs focus:outline-none focus:ring-2 focus:ring-indigo-500">
                         <option value="">Tất cả Môn</option>
@@ -86,7 +85,7 @@
                     </button>
                 </div>
             </div>
-            <!-- Modal Body -->
+            <!-- Modal Body (Iframe) -->
             <div class="flex-grow bg-slate-950 relative">
                 <iframe id="modalIframe" src="" class="w-full h-full border-0" allowfullscreen></iframe>
             </div>
@@ -98,7 +97,7 @@
         <p>&copy; TRANG WEB DO GIÁO VIÊN NGUYỄN SƠN HÀ PHÁT HÀNH.</p>
     </footer>
 
-    <!-- JavaScript Xử Lý Dữ Liệu -->
+    <!-- JavaScript Core Logic -->
     <script>
         const API_URL = 'https://script.google.com/macros/s/AKfycbw5hl_4do6oovCYg2m4b3pwD-x8KWcHXqdbBolbAB6tbIQTVoqJqNx28XPAHKGTN31uGA/exec';
 
@@ -111,7 +110,7 @@
                 document.getElementById('loading').style.display = 'none';
                 
                 initFilters(allLessons);
-                processAndDisplay(allLessons); // Hiển thị toàn bộ ngay lập tức
+                processAndDisplay(allLessons);
             } catch (err) {
                 document.getElementById('loading').innerHTML = `
                     <div class="text-rose-400 bg-rose-500/10 border border-rose-500/20 px-4 py-3 rounded-xl text-sm">
@@ -121,38 +120,29 @@
                 console.error(err);
             }
         }
-		// Hàm tự động gán màu sắc đẹp mắt cho từng Môn học
-		function getSubjectBadgeStyle(subjectName) {
-			const name = (subjectName || "").toLowerCase().trim();
-			
-			if (name.includes("tin")) {
-				return "bg-indigo-500/10 text-indigo-400 border-indigo-500/20"; // Màu Tím Chàm
-			} else if (name.includes("toán")) {
-				return "bg-emerald-500/10 text-emerald-400 border-emerald-500/20"; // Màu Xanh Lá
-			} else if (name.includes("lý") || name.includes("vật lý")) {
-				return "bg-sky-500/10 text-sky-400 border-sky-500/20"; // Màu Xanh Dương
-			} else if (name.includes("hóa")) {
-				return "bg-amber-500/10 text-amber-400 border-amber-500/20"; // Màu Cam Amber
-			} else if (name.includes("sinh")) {
-				return "bg-teal-500/10 text-teal-400 border-teal-500/20"; // Màu Xanh Ngọc
-			} else if (name.includes("văn") || name.includes("ngữ văn")) {
-				return "bg-rose-500/10 text-rose-400 border-rose-500/20"; // Màu Đỏ Hồng
-			} else if (name.includes("anh") || name.includes("tiếng anh")) {
-				return "bg-purple-500/10 text-purple-400 border-purple-500/20"; // Màu Tím Đậm
-			} else if (name.includes("sử") || name.includes("địa")) {
-				return "bg-orange-500/10 text-orange-400 border-orange-500/20"; // Màu Cam Đậm
-			}
-			
-			// Môn khác mặc định
-			return "bg-slate-700/40 text-slate-300 border-slate-600/50";
-		}
+
+        // Tự động gán màu sắc Badge riêng cho từng môn học
+        function getSubjectBadgeStyle(subjectName) {
+            const name = (subjectName || "").toLowerCase().trim();
+            if (name.includes("tin")) return "bg-indigo-500/10 text-indigo-400 border-indigo-500/20";
+            if (name.includes("toán")) return "bg-emerald-500/10 text-emerald-400 border-emerald-500/20";
+            if (name.includes("lý") || name.includes("vật lý")) return "bg-sky-500/10 text-sky-400 border-sky-500/20";
+            if (name.includes("hóa")) return "bg-amber-500/10 text-amber-400 border-amber-500/20";
+            if (name.includes("sinh")) return "bg-teal-500/10 text-teal-400 border-teal-500/20";
+            if (name.includes("văn") || name.includes("ngữ văn")) return "bg-rose-500/10 text-rose-400 border-rose-500/20";
+            if (name.includes("anh") || name.includes("tiếng anh")) return "bg-purple-500/10 text-purple-400 border-purple-500/20";
+            if (name.includes("sử") || name.includes("địa")) return "bg-orange-500/10 text-orange-400 border-orange-500/20";
+            return "bg-slate-700/40 text-slate-300 border-slate-600/50";
+        }
+
+        // Khởi tạo các giá trị cho ô chọn Môn & Khối
         function initFilters(data) {
             const monSet = new Set();
             const khoiSet = new Set();
 
             data.forEach(item => {
-                if (item["Môn Học"]) monSet.add(item["Môn Học"].trim());
-                if (item["Khối"]) khoiSet.add(item["Khối"].trim());
+                if (item["Môn Học"]) monSet.add(item["Môn Học"].toString().trim());
+                if (item["Khối"]) khoiSet.add(item["Khối"].toString().trim());
             });
 
             const monSelect = document.getElementById('filterMon');
@@ -172,6 +162,7 @@
             });
         }
 
+        // Thực hiện lọc bài học dựa trên từ khóa, môn và khối
         function filterData() {
             const keyword = document.getElementById('searchInput').value.toLowerCase().trim();
             const selectedMon = document.getElementById('filterMon').value.trim();
@@ -192,6 +183,7 @@
             processAndDisplay(filtered);
         }
 
+        // Gom nhóm theo (Môn + Khối + Tên Bài) & Sắp xếp theo thứ tự số bài
         function processAndDisplay(lessons) {
             const grid = document.getElementById('courseGrid');
             const noResult = document.getElementById('noResult');
@@ -207,32 +199,40 @@
             let groupedMap = {};
             lessons.forEach(item => {
                 const title = item["Tên Bài Giảng"] || "";
+                const monHoc = item["Môn Học"] || "Chưa phân loại";
+                const khoi = item["Khối"] || "Chung";
                 if (!title.trim()) return;
 
-                if (!groupedMap[title]) {
-                    groupedMap[title] = {
-                        monHoc: item["Môn Học"] || "Chưa phân loại",
-                        khoi: item["Khối"] || "Chung",
+                // Khóa duy nhất kết hợp Môn + Khối + Tên bài để tránh trùng lặp giữa các lớp
+                const uniqueKey = `${monHoc}_${khoi}_${title}`;
+
+                if (!groupedMap[uniqueKey]) {
+                    groupedMap[uniqueKey] = {
+                        title: title,
+                        monHoc: monHoc,
+                        khoi: khoi,
                         date: item["Ngày Cập Nhật Cuối"] || "",
                         files: []
                     };
                 }
-                groupedMap[title].files.push({
+                groupedMap[uniqueKey].files.push({
                     type: item["Loại File"] || "Tài liệu",
                     url: item["Link Truy Cập"] || "#"
                 });
             });
 
-            // 🌟 SẮP XẾP CÁC BÀI HỌC THEO SỐ THỨ TỰ TỪ NHỎ ĐẾN LỚN (Bài 7, 8, 9, 10,...)
+            // Sắp xếp tăng dần theo số thứ tự Bài (Bài 7, 8, 9, 10...)
             const sortedKeys = Object.keys(groupedMap).sort((a, b) => {
-                let numA = parseInt((a.match(/\d+/) || [0])[0]);
-                let numB = parseInt((b.match(/\d+/) || [0])[0]);
+                let titleA = groupedMap[a].title;
+                let titleB = groupedMap[b].title;
+                let numA = parseInt((titleA.match(/\d+/) || [0])[0]);
+                let numB = parseInt((titleB.match(/\d+/) || [0])[0]);
                 return numA - numB;
             });
 
-            // Duyệt qua danh sách đã sắp xếp
-            sortedKeys.forEach((title, index) => {
-                const group = groupedMap[title];
+            sortedKeys.forEach((key, index) => {
+                const group = groupedMap[key];
+                const title = group.title;
                 
                 let formattedDate = "";
                 if (group.date) {
@@ -269,9 +269,7 @@
                     `;
                 });
 
-                // Lấy kiểu màu tương ứng với môn học
                 const badgeStyle = getSubjectBadgeStyle(group.monHoc);
-
                 const cardId = `dropdown_${index}`;
                 const card = document.createElement('div');
                 card.className = "group bg-slate-800/60 hover:bg-slate-800 border border-slate-700/70 hover:border-indigo-500/50 rounded-2xl p-5 flex flex-col justify-between transition-all duration-300 hover:shadow-xl hover:shadow-indigo-500/10";
@@ -305,6 +303,7 @@
             });
         }
 
+        // Bật / tắt menu xổ xuống của loại tài liệu
         function toggleDropdown(cardId) {
             const dropdown = document.getElementById(cardId);
             const arrow = document.getElementById(`arrow_${cardId}`);
@@ -319,6 +318,7 @@
             }
         }
 
+        // Xử lý chuyển link Google Drive sang định dạng xem trực tiếp (/preview)
         function getEmbedUrl(originalUrl) {
             if (!originalUrl) return "";
             if (originalUrl.includes("drive.google.com") || originalUrl.includes("docs.google.com")) {
@@ -330,6 +330,7 @@
             return originalUrl;
         }
 
+        // Mở Modal xem trực tiếp
         function openModal(title, url) {
             const decodedTitle = decodeURIComponent(title);
             document.getElementById('modalTitle').innerText = decodedTitle;
@@ -338,6 +339,7 @@
             document.body.style.overflow = 'hidden';
         }
 
+        // Đóng Modal xem trực tiếp
         function closeModal() {
             document.getElementById('viewerModal').classList.add('hidden');
             document.getElementById('modalIframe').src = "";
