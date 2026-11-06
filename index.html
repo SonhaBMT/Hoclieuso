@@ -61,6 +61,13 @@
 
     <!-- Main Content Area -->
     <main class="max-w-6xl mx-auto px-4 sm:px-6 py-10 flex-grow w-full">
+        
+        <!-- Thanh hiển thị tổng số lượng kết quả -->
+        <div id="resultCountBar" class="mb-6 flex items-center justify-between bg-slate-800/40 border border-slate-800 px-4 py-2.5 rounded-xl text-xs sm:text-sm text-slate-400">
+            <span>Hiển thị kết quả lọc:</span>
+            <span id="totalCountBadge" class="font-semibold text-indigo-400 bg-indigo-500/10 px-2.5 py-1 rounded-lg border border-indigo-500/20">Đang tải...</span>
+        </div>
+
         <div id="loading" class="flex flex-col items-center justify-center py-20 gap-3">
             <div class="w-10 h-10 border-4 border-indigo-500 border-t-transparent rounded-full animate-spin"></div>
             <p class="text-slate-400 text-sm font-medium">Đang kết nối cơ sở dữ liệu học tập...</p>
@@ -187,14 +194,8 @@
         function processAndDisplay(lessons) {
             const grid = document.getElementById('courseGrid');
             const noResult = document.getElementById('noResult');
+            const totalCountBadge = document.getElementById('totalCountBadge');
             grid.innerHTML = '';
-
-            if (!lessons || lessons.length === 0) {
-                noResult.classList.remove('hidden');
-                return;
-            } else {
-                noResult.classList.add('hidden');
-            }
 
             let groupedMap = {};
             lessons.forEach(item => {
@@ -222,8 +223,20 @@
                 });
             });
 
+            const sortedKeys = Object.keys(groupedMap);
+            
+            // Cập nhật tổng số bài học / số lượng tài liệu tìm được lên giao diện
+            totalCountBadge.innerText = `${sortedKeys.length} bài giảng (${lessons.length} tệp tài liệu)`;
+
+            if (sortedKeys.length === 0) {
+                noResult.classList.remove('hidden');
+                return;
+            } else {
+                noResult.classList.add('hidden');
+            }
+
             // Sắp xếp tăng dần theo số thứ tự Bài (Bài 7, 8, 9, 10...)
-            const sortedKeys = Object.keys(groupedMap).sort((a, b) => {
+            sortedKeys.sort((a, b) => {
                 let titleA = groupedMap[a].title;
                 let titleB = groupedMap[b].title;
                 let numA = parseInt((titleA.match(/\d+/) || [0])[0]);
