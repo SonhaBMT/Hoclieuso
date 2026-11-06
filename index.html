@@ -183,21 +183,22 @@
         }
 
         // Hàm chuyển đổi Link Drive sang dạng Nhúng tối ưu cho mọi thiết bị (PC & Mobile)
-function getEmbedUrl(originalUrl) {
-    if (!originalUrl) return "";
-    
-    // Nếu là link Google Drive
-    if (originalUrl.includes("drive.google.com")) {
-        // Chuyển đổi mọi dạng link /view, /edit thành /preview kèm theo tham số ẩn giao diện thừa
-        let fileIdMatch = originalUrl.match(/\/d\/([a-zA-Z0-9_-]+)/);
-        if (fileIdMatch && fileIdMatch[1]) {
-            let fileId = fileIdMatch[1];
-            // Sử dụng định dạng nhúng chuẩn xác của Google Viewer
-            return `https://drive.google.com/file/d/${fileId}/preview?usp=drivesdk`;
+        // Hàm chuyển đổi Link Drive sang dạng Nhúng tối ưu chống lỗi yêu cầu quyền
+        function getEmbedUrl(originalUrl) {
+            if (!originalUrl) return "";
+            
+            // Xử lý nếu là link Google Drive hoặc Google Slides
+            if (originalUrl.includes("drive.google.com") || originalUrl.includes("docs.google.com")) {
+                // Lấy ID của file từ URL
+                let fileIdMatch = originalUrl.match(/\/d\/([a-zA-Z0-9_-]+)/);
+                if (fileIdMatch && fileIdMatch[1]) {
+                    let fileId = fileIdMatch[1];
+                    // Sử dụng đuôi /preview chuẩn xác giúp vượt qua màn hình đăng nhập tài khoản
+                    return `https://drive.google.com/file/d/${fileId}/preview`;
+                }
+            }
+            return originalUrl;
         }
-    }
-    return originalUrl;
-}
 
         // Mở Modal xem trực tiếp
         function openModal(title, url) {
